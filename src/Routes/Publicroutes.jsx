@@ -1,16 +1,18 @@
-// routes/PublicRoutes.js
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLogin from '../pages/Login';
-import AdminDashboard from '../pages/AdminDashboard';
+
 const PublicRoutes = () => {
   return (
     <Routes>
+      {/* Redirect root path "/" to "/login" */}
+      <Route path="/" element={<Navigate to="/login" />} />
+
       {/* Public Login Route */}
       <Route path="/login" element={<AdminLogin />} />
-      {/* <Route path="/dashboard" element={<AdminDashboard/>}/> */}
-    </Routes>
 
+      {/* Add any other public routes if needed */}
+    </Routes>
   );
 };
 
