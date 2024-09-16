@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 import ReactPaginate from "react-paginate";
 import { RotatingLines } from "react-loader-spinner";
 import { FaChevronLeft, FaUserCircle } from "react-icons/fa";
-
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 // Initialize Firebase Functions
 const functions = getFunctions();
 const deleteUserAndData = httpsCallable(functions, "deleteUserAndData");
@@ -37,23 +37,22 @@ const ManageUsers = () => {
   const [pageCount, setPageCount] = useState(0); // Total number of pages
   const [currentItems, setCurrentItems] = useState([]); // Current users to display
   const [itemOffset, setItemOffset] = useState(0); // Offset for the current page
-
-  // Fetch users from Firestore
-const fetchUsers = async () => {
+  const navigate = useNavigate();
+  const fetchUsers = async () => {
     setLoading(true);
     try {
       const usersQuery = query(collection(db, "users"));
       const usersSnapshot = await getDocs(usersQuery);
-  
+
       const usersList = usersSnapshot.docs.map((doc) => ({
         id: doc.id, // Ensure the user ID is included
         ...doc.data(),
       }));
-  
+
       // Count activated and deactivated accounts
       const activated = usersList.filter((user) => !user.isDeactivated).length;
       const deactivated = usersList.filter((user) => user.isDeactivated).length;
-  
+
       // Set users, count, and pagination
       setUsers(usersList);
       setTotalUsers(usersList.length); // Set total user count
@@ -67,7 +66,6 @@ const fetchUsers = async () => {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     fetchUsers();
@@ -141,34 +139,39 @@ const fetchUsers = async () => {
       toast.error("No users selected for deletion.");
       return;
     }
-  
+
     try {
       setDeleteLoading(true);
       console.log("Deleting users:", selectedUserIds);
-  
+
       const deletePromises = selectedUserIds.map(async (userId) => {
-        const response = await fetch('https://us-central1-ecommerce-ba520.cloudfunctions.net/deleteUserAndData', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ uid: userId }),
-        });
-  
+        const response = await fetch(
+          "https://us-central1-ecommerce-ba520.cloudfunctions.net/deleteUserAndData",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ uid: userId }),
+          }
+        );
+
         if (!response.ok) {
-          throw new Error(`Failed to delete user. Server responded with status ${response.status}`);
+          throw new Error(
+            `Failed to delete user. Server responded with status ${response.status}`
+          );
         }
-  
+
         const result = await response.json();
         if (!result.success) {
           throw new Error(result.error);
         }
       });
-  
+
       await Promise.all(deletePromises);
-  
+
       toast.success("Selected users and their data deleted successfully.");
-      
+
       // Clear selected users and fetch the updated list
       setSelectedUserIds([]);
       fetchUsers(); // Ensure the list is updated
@@ -179,8 +182,6 @@ const fetchUsers = async () => {
       setDeleteLoading(false);
     }
   };
-  
-  
 
   // Handle deactivating or reactivating user
   const handleToggleActive = async (user) => {
@@ -268,11 +269,17 @@ const fetchUsers = async () => {
       }
     }
   };
+  const handleBackClick = () => {
+    navigate('/dashboard'); // Navigate to the previous page
+  };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <button className="bg-customOrange text-white px-4 py-2 rounded-lg flex items-center">
+        <button
+          onClick={handleBackClick} // Set onClick to navigate back
+          className="bg-customOrange text-white px-4 py-2 rounded-lg flex items-center"
+        >
           <FaChevronLeft className="mr-2" />
           Back
         </button>
