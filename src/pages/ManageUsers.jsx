@@ -270,7 +270,7 @@ const ManageUsers = () => {
     }
   };
   const handleBackClick = () => {
-    navigate('/dashboard'); // Navigate to the previous page
+    navigate("/dashboard"); // Navigate to the previous page
   };
 
   return (
@@ -353,13 +353,13 @@ const ManageUsers = () => {
                         setIsEditing(false); // View mode by default
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        className="mr-2"
-                        checked={selectedUserIds.includes(user.id)}
-                        onChange={() => handleCheckboxChange(user.id)}
-                      />
                       <div>
+                        <input
+                          type="checkbox"
+                          className="mr-2"
+                          checked={selectedUserIds.includes(user.id)}
+                          onChange={() => handleCheckboxChange(user.id)}
+                        />
                         <span className="font-poppins text-sm font-semibold uppercase">
                           {user.displayName
                             ? user.displayName.toUpperCase()

@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import PrivateRoute from "../Components/AdminRules/Privateroutes";
 import AdminDashboard from "../pages/AdminDashboard";
+import UnapprovedVendors from "../pages/Unapprovedvendors";
 import VendorApproval from "../pages/VendorApproval";
 import ManageUsers from "../pages/ManageUsers";
 const AdminRoutes = () => {
@@ -27,12 +28,20 @@ const AdminRoutes = () => {
         }
       />
       <Route
-      path="manageusers"
-      element={
-        <PrivateRoute>
-          <ManageUsers />
-        </PrivateRoute>
-      }
+        path="unapproved-vendors"
+        element={
+          <PrivateRoute>
+            <UnapprovedVendors />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="manageusers"
+        element={
+          <PrivateRoute>
+            <ManageUsers />
+          </PrivateRoute>
+        }
       />
     </Routes>
   );

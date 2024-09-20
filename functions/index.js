@@ -1,45 +1,49 @@
-const functions = require('firebase-functions');
-const admin = require('firebase-admin');
-const cors = require('cors')({ origin: true });
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const cors = require("cors")({ origin: true });
 
 admin.initializeApp();
-
-exports.deleteUserAndData = functions.https.onRequest((req, res) => {
+exports.deleteVendorAndData = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
-    if (req.method !== 'POST') {
-      return res.status(403).send('Forbidden!');
+    if (req.method !== "POST") {
+      return res.status(403).send("Forbidden!");
     }
 
     const uid = req.body.uid;
 
     try {
-      // 1. Delete the user from Firebase Authentication
+      // 1. Delete the vendor from Firebase Authentication (optional if needed)
       await admin.auth().deleteUser(uid);
-
-      // 2. Define the collections where you need to delete documents
-      const collectionsToDeleteFrom = ['favorites', 'notifications', 'carts', 'follows'];
 
       const batch = admin.firestore().batch();
 
-      // 3. Delete the user's document from the users collection
-      const userDocRef = admin.firestore().collection('users').doc(uid);
-      batch.delete(userDocRef);  // Add delete operation for users collection
+      // 2. Delete the vendor's document from the vendors collection
+      const vendorDocRef = admin.firestore().collection("vendors").doc(uid);
+      batch.delete(vendorDocRef);
 
-      // 4. Delete associated documents from other collections
-      for (const collection of collectionsToDeleteFrom) {
-        const docRef = admin.firestore().collection(collection).doc(uid);
-        batch.delete(docRef);  // Add delete operation for each associated collection
-      }
+      // 3. Fetch and delete all products associated with this vendor
+      const productsSnapshot = await admin
+        .firestore()
+        .collection("products")
+        .where("vendorId", "==", uid)
+        .get();
 
-      // 5. Commit the batch operation
+      productsSnapshot.forEach((doc) => {
+        batch.delete(doc.ref); // Delete each product document
+      });
+
+      // 4. Commit the batch operation to delete the vendor and products
       await batch.commit();
 
-      // 6. Return a success message
-      return res.status(200).json({ success: true, message: `User ${uid} and associated data deleted successfully.` });
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message: `Vendor ${uid} and all related data deleted successfully.`,
+        });
     } catch (error) {
-      console.error('Error deleting user:', error);
+      console.error("Error deleting vendor and data:", error);
       return res.status(500).json({ success: false, error: error.message });
     }
   });
 });
-
