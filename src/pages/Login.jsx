@@ -52,15 +52,21 @@ const AdminLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       {/* Toast Container */}
       <Toaster position="top-center" reverseOrder={false} />
-      
+
       <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
         <div className="text-center mb-6">
-          <img src={logo} alt="logo" className="w-24 mx-auto" />
-          <h2 className="text-2xl font-semibold text-gray-700 mt-4">Admin Login</h2>
+          <div className="flex justify-center  h-20 items-center  rounded-md">
+            <img src={logo} alt="logo" className="w-12 h-12 rounded-md mx-auto" />
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-700 mt-4">
+            Admin Login
+          </h2>
           <p className="text-gray-500">Sign in and start managing my thrift!</p>
         </div>
 
-        {error && <p className="text-red-600 text-sm mb-4 text-center">{error}</p>}
+        {error && (
+          <p className="text-red-600 text-sm mb-4 text-center">{error}</p>
+        )}
 
         <div className="mb-4">
           <input
