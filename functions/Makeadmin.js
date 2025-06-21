@@ -9,7 +9,7 @@ admin.initializeApp({
 
 // Replace with the email and password of the admin user you want to create or update
 const email = "admin@gmail.com";
-const password = "Bigboy90p"; // Set your desired password
+const password = "xvxvxvdjeie££$SSZZZDWW----kss"; // Set your desired password
 
 // Create the user with email and password, or update if the user already exists
 admin.auth().getUserByEmail(email)
