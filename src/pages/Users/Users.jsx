@@ -12,7 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { RotatingLines } from "react-loader-spinner";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import Modal from "../../components/Modal";
+import Modal from "../../Components/Modal";
 import ReactPaginate from "react-paginate";
 import { FaChevronLeft } from "react-icons/fa";
 

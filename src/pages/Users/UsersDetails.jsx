@@ -10,7 +10,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { db } from "../../firebase.config";
-import Modal from "../../components/Modal";
+import Modal from "../../Components/Modal";
 import { toast, ToastContainer } from "react-toastify";
 import { RotatingLines } from "react-loader-spinner";
 import ReactPaginate from "react-paginate";
