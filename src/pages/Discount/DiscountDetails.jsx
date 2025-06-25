@@ -1,4 +1,3 @@
-// File: src/pages/admin/discounts/[id].jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { db } from "../../firebase.config";

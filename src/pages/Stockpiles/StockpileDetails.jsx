@@ -1,4 +1,3 @@
-// File: src/pages/admin/stockpiles/[id].jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { doc, getDoc, getDocs, collection } from "firebase/firestore";

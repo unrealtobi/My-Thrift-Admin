@@ -1,4 +1,3 @@
-// File: src/pages/admin/products/index.jsx
 import React, { useEffect, useState } from "react";
 import { db } from "../../firebase.config";
 import {

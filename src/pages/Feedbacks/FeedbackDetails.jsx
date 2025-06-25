@@ -1,4 +1,3 @@
-// File: src/pages/admin/feedbacks/[id].jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
