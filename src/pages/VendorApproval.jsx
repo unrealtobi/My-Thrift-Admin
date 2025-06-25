@@ -62,12 +62,10 @@ const ManageVendors = () => {
         ...doc.data(),
       }));
 
-      const activated = vendorsList.filter(
-        (vendor) => !vendor.isDeactivated
-      ).length;
-      const deactivated = vendorsList.filter(
-        (vendor) => vendor.isDeactivated
-      ).length;
+      const activated = vendorsList.filter((vendor) => !vendor.isDeactivated)
+        .length;
+      const deactivated = vendorsList.filter((vendor) => vendor.isDeactivated)
+        .length;
 
       setVendors(vendorsList);
       setTotalVendors(vendorsList.length);

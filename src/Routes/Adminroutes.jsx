@@ -5,6 +5,23 @@ import AdminDashboard from "../pages/AdminDashboard";
 import UnapprovedVendors from "../pages/Unapprovedvendors";
 import VendorApproval from "../pages/VendorApproval";
 import ManageUsers from "../pages/ManageUsers";
+import ProductList from "../pages/Products/Products";
+import ProductDetail from "../pages/Products/ProductDetails";
+import OrderList from "../pages/Orders/Orders";
+import OrderDetails from "../pages/Orders/OrderDetails";
+import VendorList from "../pages/Vendors/Vendors";
+import VendorDetails from "../pages/Vendors/Vendordetails";
+import InquiriesList from "../pages/Inquiries/Inquiries";
+import InquiryDetails from "../pages/Inquiries/InquiryDetails";
+import DiscountList from "../pages/Discount/Discount";
+import DiscountDetails from "../pages/Discount/DiscountDetails";
+import SubscriptionList from "../pages/Subscriptions/Subscription";
+import StockpilesList from "../pages/Stockpiles/Stockpiles";
+import StockpileDetails from "../pages/Stockpiles/StockpileDetails";
+import FeedbackList from "../pages/Feedbacks/Feedbacks";
+import FeedbackDetails from "../pages/Feedbacks/FeedbackDetails";
+import UserList from "../pages/Users/Users";
+import UserDetails from "../pages/Users/UsersDetails";
 const AdminRoutes = () => {
   return (
     <Routes>
@@ -43,6 +60,143 @@ const AdminRoutes = () => {
           </PrivateRoute>
         }
       />
+      <Route
+        path="products"
+        element={
+          <PrivateRoute>
+            <ProductList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="products/:id"
+        element={
+          <PrivateRoute>
+            <ProductDetail />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="orders"
+        element={
+          <PrivateRoute>
+            <OrderList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="orders/:id"
+        element={
+          <PrivateRoute>
+            <OrderDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="vendor"
+        element={
+          <PrivateRoute>
+            <VendorList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="vendor/:id"
+        element={
+          <PrivateRoute>
+            <VendorDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="inquiries"
+        element={
+          <PrivateRoute>
+            <InquiriesList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="inquiries/:id"
+        element={
+          <PrivateRoute>
+            <InquiryDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="discounts"
+        element={
+          <PrivateRoute>
+            <DiscountList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="discounts/:id"
+        element={
+          <PrivateRoute>
+            <DiscountDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="Subscribers"
+        element={
+          <PrivateRoute>
+            <SubscriptionList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="stockpiles"
+        element={
+          <PrivateRoute>
+            <StockpilesList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="stockpiles/:id"
+        element={
+          <PrivateRoute>
+            <StockpileDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="feedbacks"
+        element={
+          <PrivateRoute>
+            <FeedbackList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="feedbacks/:id"
+        element={
+          <PrivateRoute>
+            <FeedbackDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="newusers"
+        element={
+          <PrivateRoute>
+            <UserList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="newusers/:id"
+        element={
+          <PrivateRoute>
+            <UserDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route path="*" element={<div>404: Not Found</div>} />
     </Routes>
   );
 };
