@@ -22,7 +22,7 @@ import {
   FaBandcamp,
   FaPhone,
 } from "react-icons/fa";
-import Modal from "../../components/Modal";
+import Modal from "../../Components/Modal";
 import ReactPaginate from "react-paginate";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import {
