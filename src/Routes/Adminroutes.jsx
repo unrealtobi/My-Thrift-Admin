@@ -11,6 +11,7 @@ import OrderList from "../pages/Orders/Orders";
 import OrderDetails from "../pages/Orders/OrderDetails";
 import VendorList from "../pages/Vendors/Vendors";
 import VendorDetails from "../pages/Vendors/Vendordetails";
+import PushNotifs from "../pages/PushNotifs/Pushnotifs";
 import InquiriesList from "../pages/Inquiries/Inquiries";
 import InquiryDetails from "../pages/Inquiries/InquiryDetails";
 import DiscountList from "../pages/Discount/Discount";
@@ -156,11 +157,20 @@ const AdminRoutes = () => {
           </PrivateRoute>
         }
       />
+
       <Route
         path="stockpiles/:id"
         element={
           <PrivateRoute>
             <StockpileDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="pushnotifications"
+        element={
+          <PrivateRoute>
+            <PushNotifs/>
           </PrivateRoute>
         }
       />

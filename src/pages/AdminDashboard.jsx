@@ -12,6 +12,9 @@ const AdminDashboard = () => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalInquiries, setTotalInquiries] = useState(0);
+
+  const [totalFCMTokens, setTotalFCMTokens] = useState(0);
+
   const [totalDiscounts, setTotalDiscounts] = useState(0);
   const [totalSubscriptions, setTotalSubscriptions] = useState(0);
   const [totalStockpiles, setTotalStockpiles] = useState(0);
@@ -58,6 +61,8 @@ const AdminDashboard = () => {
       // Fetch total Stockpiles
       const stockpilesSnapshot = await getDocs(collection(db, "stockpiles"));
       setTotalStockpiles(stockpilesSnapshot.size);
+      const fcmTokensSnapshot = await getDocs(collection(db, "fcmTokens"));
+      setTotalFCMTokens(fcmTokensSnapshot.size);
 
       // Fetch total Feedbacks
       const feedbacksSnapshot = await getDocs(collection(db, "feedbacks"));
@@ -87,6 +92,9 @@ const AdminDashboard = () => {
   // Navigate to the user page on click
   const handleUserClick = () => {
     navigate("/dashboard/manageusers"); // Change this to the route for your user page
+  };
+  const handlePushClick = () => {
+    navigate("/dashboard/pushnotifications"); // Change this to the route for your user page
   };
   const handleVendorClick = () => {
     navigate("/dashboard/vendors");
@@ -223,6 +231,17 @@ const AdminDashboard = () => {
           <p className="text-2xl font-bold text-green-500">
             {" "}
             Primary: {totalSubscriptions}
+          </p>
+        </div>
+        <div
+          onClick={handlePushClick}
+          className="bg-white shadow-lg p-6 rounded-lg cursor-pointer hover:bg-gray-100"
+        >
+          <h2 className="text-xl font-semibold text-gray-700">
+            Send Push Notifs
+          </h2>
+          <p className="text-2xl font-bold text-green-500">
+            {totalFCMTokens} tokens
           </p>
         </div>
         {/* Total Stockpile */}
