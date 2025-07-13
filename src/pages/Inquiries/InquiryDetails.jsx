@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { db } from "../../firebase.config";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import { FaChevronLeft } from "react-icons/fa";
 
@@ -16,6 +16,7 @@ export default function InquiryDetails() {
       const fetchInquiry = async () => {
         const ref = doc(db, "inquiries", id);
         const snap = await getDoc(ref);
+
         if (snap.exists()) {
           const data = snap.data();
 
@@ -23,6 +24,7 @@ export default function InquiryDetails() {
           let vendorShopName = "";
           let productImage = "";
 
+          // Get customer name via userId
           if (data.userId) {
             const userSnap = await getDoc(doc(db, "users", data.userId));
             if (userSnap.exists()) {
@@ -31,6 +33,20 @@ export default function InquiryDetails() {
             }
           }
 
+          // Fallback: Get customer name via email if name not yet found
+          if (!customerName && data.email) {
+            const usersSnap = await getDocs(collection(db, "users"));
+            const matchedUser = usersSnap.docs.find(
+              (doc) =>
+                doc.data().email?.toLowerCase() === data.email?.toLowerCase()
+            );
+            if (matchedUser) {
+              const u = matchedUser.data();
+              customerName = u.displayName || u.name || u.username || "";
+            }
+          }
+
+          // Vendor name fallback
           if (data.vendorId) {
             const vendorSnap = await getDoc(doc(db, "vendors", data.vendorId));
             if (vendorSnap.exists()) {
@@ -38,6 +54,7 @@ export default function InquiryDetails() {
             }
           }
 
+          // Product image fallback
           if (data.productId) {
             const productSnap = await getDoc(
               doc(db, "products", data.productId)
@@ -55,8 +72,10 @@ export default function InquiryDetails() {
             productImage,
           });
         }
+
         setLoading(false);
       };
+
       fetchInquiry();
     }
   }, [id]);
@@ -91,7 +110,18 @@ export default function InquiryDetails() {
           </p>
           <p>
             <strong>Customer ID:</strong>{" "}
-            {inquiry.customerId || inquiry.userId || "—"}
+            {inquiry.customerId || inquiry.userId ? (
+              <Link
+                to={`/dashboard/newusers/${
+                  inquiry.customerId || inquiry.userId
+                }`}
+                className="text-blue-600 hover:underline"
+              >
+                {inquiry.customerId || inquiry.userId}
+              </Link>
+            ) : (
+              "—"
+            )}
           </p>
         </div>
 

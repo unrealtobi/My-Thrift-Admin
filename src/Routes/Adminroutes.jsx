@@ -23,6 +23,8 @@ import FeedbackList from "../pages/Feedbacks/Feedbacks";
 import FeedbackDetails from "../pages/Feedbacks/FeedbackDetails";
 import UserList from "../pages/Users/Users";
 import UserDetails from "../pages/Users/UsersDetails";
+import CartDetails from "../pages/Carts/CartDetails";
+import CartList from "../pages/Carts/CartList";
 const AdminRoutes = () => {
   return (
     <Routes>
@@ -170,7 +172,7 @@ const AdminRoutes = () => {
         path="pushnotifications"
         element={
           <PrivateRoute>
-            <PushNotifs/>
+            <PushNotifs />
           </PrivateRoute>
         }
       />
@@ -203,6 +205,22 @@ const AdminRoutes = () => {
         element={
           <PrivateRoute>
             <UserDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="carts"
+        element={
+          <PrivateRoute>
+            <CartList />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="carts/:id"
+        element={
+          <PrivateRoute>
+            <CartDetails />
           </PrivateRoute>
         }
       />

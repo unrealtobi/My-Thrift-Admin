@@ -108,7 +108,13 @@ export default function StockpileDetails() {
             User & Vendor Info
           </h2>
           <p>
-            <strong>User:</strong> {userName}
+            <strong>User:</strong>
+            <Link
+              to={`/dashboard/newusers/${stockpile.userId}`}
+              className="text-blue-600 hover:underline"
+            >
+              {userName}
+            </Link>
           </p>
           <p>
             <strong>Vendor:</strong>{" "}

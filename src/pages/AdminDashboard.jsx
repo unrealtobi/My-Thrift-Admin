@@ -19,7 +19,7 @@ const AdminDashboard = () => {
   const [totalSubscriptions, setTotalSubscriptions] = useState(0);
   const [totalStockpiles, setTotalStockpiles] = useState(0);
   const [totalFeedbacks, setTotalFeedbacks] = useState(0);
-
+  const [totalCarts, setTotalCarts] = useState(0);
   const [totalUnapprovedVendors, setTotalUnapprovedVendors] = useState(0);
   const navigate = useNavigate(); // Create navigate hook
 
@@ -67,6 +67,9 @@ const AdminDashboard = () => {
       // Fetch total Feedbacks
       const feedbacksSnapshot = await getDocs(collection(db, "feedbacks"));
       setTotalFeedbacks(feedbacksSnapshot.size);
+
+      const cartsSnapshot = await getDocs(collection(db, "carts"));
+      setTotalCarts(cartsSnapshot.size);
 
       // Fetch total products
       const productsSnapshot = await getDocs(collection(db, "products"));
@@ -131,6 +134,10 @@ const AdminDashboard = () => {
 
   const handleNewUsersClick = () => {
     navigate("/dashboard/newusers"); // Route to your products admin page
+  };
+
+  const handleCartsClick = () => {
+    navigate("/dashboard/carts"); // Route to your carts admin page
   };
 
   return (
@@ -272,6 +279,16 @@ const AdminDashboard = () => {
         >
           <h2 className="text-xl font-semibold text-gray-700">Users</h2>
           <p className="text-2xl font-bold text-green-500">{totalUsers}</p>
+        </div>
+
+        {/* New Cart */}
+
+        <div
+          // onClick={handleCartsClick}
+          className="bg-white shadow-lg p-6 rounded-lg cursor-pointer hover:bg-gray-100"
+        >
+          <h2 className="text-xl font-semibold text-gray-700">Carts</h2>
+          <p className="text-2xl font-bold text-green-500">{totalCarts}</p>
         </div>
       </div>
 

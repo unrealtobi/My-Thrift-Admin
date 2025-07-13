@@ -3,8 +3,9 @@ import {
   collection,
   getDocs,
   doc,
-  updateDoc,
   getDoc,
+  query,
+  where,
 } from "firebase/firestore";
 import { db } from "../../firebase.config";
 import { Link, useNavigate } from "react-router-dom";
@@ -14,49 +15,76 @@ import { FaChevronLeft, FaFileExport } from "react-icons/fa";
 export default function FeedbackList() {
   const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState([]);
-  const [selected, setSelected] = useState([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [page, setPage] = useState(0);
   const PER_PAGE = 10;
 
-  const formatDate = (ts) => ts?.toDate?.().toLocaleString() || "—";
-
   useEffect(() => {
     const fetchFeedbacks = async () => {
       const snap = await getDocs(collection(db, "feedbacks"));
-      const list = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const list = await Promise.all(
+        snap.docs.map(async (docSnap) => {
+          const data = docSnap.data();
+          let source = "Guest";
+
+          if (data.email) {
+            // Check if email exists in vendors
+            const vendorQuery = query(
+              collection(db, "vendors"),
+              where("email", "==", data.email)
+            );
+            const vendorSnap = await getDocs(vendorQuery);
+            if (!vendorSnap.empty) {
+              source = "Vendor";
+            } else {
+              // Check if email exists in users
+              const userQuery = query(
+                collection(db, "users"),
+                where("email", "==", data.email)
+              );
+              const userSnap = await getDocs(userQuery);
+              if (!userSnap.empty) {
+                source = "Customer";
+              }
+            }
+          }
+
+          return {
+            id: docSnap.id,
+            ...data,
+            source,
+          };
+        })
+      );
+
       setFeedbacks(list);
     };
+
     fetchFeedbacks();
   }, []);
+
+  const formatDate = (ts) => ts?.toDate?.().toLocaleString() || "—";
 
   const filtered = feedbacks.filter((fb) => {
     const matchSearch =
       fb.email?.toLowerCase().includes(search.toLowerCase()) ||
       fb.feedbackText?.toLowerCase().includes(search.toLowerCase());
 
-    const matchType = filterType === "all" || fb.feedbackType === filterType;
+    const matchType =
+      filterType === "all" || fb.feedbackType?.toLowerCase() === filterType;
 
     return matchSearch && matchType;
   });
 
   const paginated = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
 
-  const toggleSelect = (id) => {
-    setSelected((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
-
   const handleExport = () => {
-    const headers = ["Email", "Type", "Submitted", "Feedback"];
+    const headers = ["Email", "Type", "Source", "Submitted", "Feedback"];
     const rows = filtered.map((fb) => [
       fb.email,
       fb.feedbackType,
+      fb.source,
       formatDate(fb.submittedAt),
       fb.feedbackText?.replace(/(\r\n|\n|\r)/gm, " "),
     ]);
@@ -71,12 +99,6 @@ export default function FeedbackList() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const getSource = (userId) => {
-    if (!userId) return "Guest";
-    if (userId.startsWith("vendor_")) return "Vendor";
-    return "Customer";
   };
 
   const markViewed = async (id) => {
@@ -96,6 +118,7 @@ export default function FeedbackList() {
         <FaChevronLeft className="mr-2" />
         Back
       </button>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-center text-customOrange">
           Feedbacks
@@ -135,16 +158,6 @@ export default function FeedbackList() {
         <table className="min-w-full">
           <thead className="bg-gray-100 text-left">
             <tr>
-              <th className="p-3">
-                <input
-                  type="checkbox"
-                  onChange={(e) =>
-                    setSelected(
-                      e.target.checked ? paginated.map((f) => f.id) : []
-                    )
-                  }
-                />
-              </th>
               <th className="p-3">Email</th>
               <th className="p-3">Type</th>
               <th className="p-3">Source</th>
@@ -157,16 +170,9 @@ export default function FeedbackList() {
           <tbody>
             {paginated.map((fb) => (
               <tr key={fb.id} className="border-t hover:bg-gray-50">
-                <td className="p-3">
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(fb.id)}
-                    onChange={() => toggleSelect(fb.id)}
-                  />
-                </td>
                 <td className="p-3">{fb.email}</td>
                 <td className="p-3 capitalize">{fb.feedbackType}</td>
-                <td className="p-3">{getSource(fb.userId)}</td>
+                <td className="p-3">{fb.source}</td>
                 <td className="p-3">
                   <span
                     className={`text-xs px-2 py-1 rounded-full font-medium ${

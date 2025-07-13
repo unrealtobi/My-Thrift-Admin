@@ -10,20 +10,42 @@ export default function OrderDetails() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [order, setOrder] = useState(null);
+  const [vendor, setVendor] = useState(null);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
-      const fetchOrder = async () => {
-        const ref = doc(db, "orders", id);
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          setOrder({ id: snap.id, ...snap.data() });
+    const fetchOrder = async () => {
+      const ref = doc(db, "orders", id);
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        const orderData = { id: snap.id, ...snap.data() };
+        setOrder(orderData);
+
+        // Get vendorId from first product in cartItems
+        const firstProductId = orderData.cartItems?.[0]?.productId;
+        if (firstProductId) {
+          const productSnap = await getDoc(doc(db, "products", firstProductId));
+          if (productSnap.exists()) {
+            const productData = productSnap.data();
+            const vendorId = productData.vendorId;
+
+            // Fetch vendor details using vendorId
+            if (vendorId) {
+              const vendorSnap = await getDoc(doc(db, "vendors", vendorId));
+              if (vendorSnap.exists()) {
+                setVendor({ id: vendorSnap.id, ...vendorSnap.data() });
+              }
+            }
+          }
         }
-        setLoading(false);
-      };
-      fetchOrder();
-    }
+      }
+
+      setLoading(false);
+    };
+
+    fetchOrder();
   }, [id]);
 
   const formatDate = (ts) => ts?.toDate?.().toLocaleString() || "—";
@@ -108,7 +130,12 @@ export default function OrderDetails() {
           </h2>
           <p className="mb-2">
             <span className="font-medium">Name:</span>{" "}
-            {order.userInfo?.displayName}
+            <Link
+              to={`/dashboard/newusers/${order.userId}`}
+              className="text-blue-600 underline"
+            >
+              {order.userInfo?.displayName || "—"}
+            </Link>
           </p>
           <p className="mb-2">
             <span className="font-medium">Email:</span> {order.userInfo?.email}
@@ -128,19 +155,29 @@ export default function OrderDetails() {
           <h2 className="text-lg font-semibold mb-4 text-customOrange">
             Vendor Info
           </h2>
-          <p className="mb-2">
-            <span className="font-medium">Vendor ID:</span>{" "}
-            <Link
-              to={`/vendors/${order.userInfo?.vendorId}`}
-              className="text-blue-600 underline"
-            >
-              {order.userInfo?.vendorId}
-            </Link>
-          </p>
-          <p className="mb-2">
-            <span className="font-medium">Status:</span>{" "}
-            {order.userInfo?.vendorStatus}
-          </p>
+          {vendor ? (
+            <>
+              <p className="mb-2">
+                <span className="font-medium">Shop Name:</span>{" "}
+                {vendor.shopName}
+              </p>
+              <p className="mb-2">
+                <span className="font-medium">Vendor ID:</span>{" "}
+                <Link
+                  to={`/dashboard/vendor/${vendor.id}`}
+                  className="text-blue-600 underline"
+                >
+                  {vendor.id}
+                </Link>
+              </p>
+              <p className="mb-2">
+                <span className="font-medium">Status:</span>{" "}
+                {vendor.status || "Active"}
+              </p>
+            </>
+          ) : (
+            <p>No vendor info available.</p>
+          )}
         </div>
 
         {/* Delivery Info */}

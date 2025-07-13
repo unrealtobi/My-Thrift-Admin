@@ -34,12 +34,31 @@ export default function InquiriesList() {
             }
           }
 
-          if (!customerName && data.userId) {
-            const userRef = doc(db, "users", data.userId);
-            const userDoc = await getDoc(userRef);
-            if (userDoc.exists()) {
-              customerName =
-                userDoc.data().displayName || userDoc.data().name || "";
+          if (!customerName) {
+            if (data.userId) {
+              const userRef = doc(db, "users", data.userId);
+              const userDoc = await getDoc(userRef);
+              if (userDoc.exists()) {
+                customerName =
+                  userDoc.data().displayName || userDoc.data().name || "";
+              }
+            }
+
+            // Fallback: try to find user by email
+            if (!customerName && data.email) {
+              const usersRef = collection(db, "users");
+              const allUsersSnap = await getDocs(usersRef);
+              const matchedUser = allUsersSnap.docs.find(
+                (u) =>
+                  u.data().email?.toLowerCase() === data.email?.toLowerCase()
+              );
+              if (matchedUser) {
+                customerName =
+                  matchedUser.data().displayName ||
+                  matchedUser.data().name ||
+                  matchedUser.data().username ||
+                  "";
+              }
             }
           }
 

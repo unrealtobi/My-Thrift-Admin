@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { db } from "../../firebase.config";
 import {
   doc,
   getDoc,
@@ -10,9 +9,11 @@ import {
   getDocs,
   updateDoc,
 } from "firebase/firestore";
+import { db } from "../../firebase.config";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaChevronLeft } from "react-icons/fa";
+import Modal from "../../Components/Modal"; // Your modal component
 
 export default function DiscountDetails() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function DiscountDetails() {
   const [discount, setDiscount] = useState(null);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
 
   const formatDate = (ts) => ts?.toDate?.().toLocaleString() || "—";
 
@@ -53,14 +55,46 @@ export default function DiscountDetails() {
     if (id) fetchDiscountAndProduct();
   }, [id]);
 
-  const toggleStatus = async () => {
+  const handleDeactivateConfirm = async () => {
     try {
       const ref = doc(db, "discounts", id);
-      await updateDoc(ref, { isActive: !discount.isActive });
-      setDiscount((prev) => ({ ...prev, isActive: !prev.isActive }));
-      toast.success("Discount status updated.");
+
+      // 1. Deactivate discount
+      await updateDoc(ref, { isActive: false });
+      setDiscount((prev) => ({ ...prev, isActive: false }));
+
+      // 2. Revert product price to initialPrice
+      if (product && discount.initialPrice) {
+        const productRef = doc(db, "products", product.id);
+        await updateDoc(productRef, { price: discount.initialPrice });
+        setProduct((prev) => ({ ...prev, price: discount.initialPrice }));
+      }
+
+      toast.success("Discount deactivated and product price reverted.");
     } catch (error) {
-      toast.error("Error updating discount status.");
+      console.error(error);
+      toast.error("Failed to deactivate discount.");
+    } finally {
+      setShowDeactivateModal(false);
+    }
+  };
+
+  const handleActivate = async () => {
+    try {
+      const ref = doc(db, "discounts", id);
+      await updateDoc(ref, { isActive: true });
+      setDiscount((prev) => ({ ...prev, isActive: true }));
+      toast.success("Discount activated.");
+    } catch (error) {
+      toast.error("Error activating discount.");
+    }
+  };
+
+  const handleToggleClick = () => {
+    if (discount.isActive) {
+      setShowDeactivateModal(true);
+    } else {
+      handleActivate();
     }
   };
 
@@ -68,13 +102,23 @@ export default function DiscountDetails() {
 
   return (
     <div className="p-6 space-y-6">
+      <ToastContainer />
+
+      <Modal
+        show={showDeactivateModal}
+        onClose={() => setShowDeactivateModal(false)}
+        onConfirm={handleDeactivateConfirm}
+        title="Deactivate Discount?"
+        message="This will disable the discount and revert the product price to its original value."
+      />
+
       <button
         onClick={() => navigate(-1)}
         className="bg-customOrange text-white px-4 py-2 rounded-lg flex mb-8 items-center"
       >
         <FaChevronLeft className="mr-2" /> Back
       </button>
-      <ToastContainer />
+
       <h1 className="text-3xl font-bold text-customOrange text-center">
         Discount Details
       </h1>
@@ -82,7 +126,7 @@ export default function DiscountDetails() {
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-4 mt-4">
         <button
-          onClick={toggleStatus}
+          onClick={handleToggleClick}
           className={`px-4 py-2 rounded text-white ${
             discount.isActive ? "bg-red-600" : "bg-green-600"
           }`}
@@ -171,6 +215,9 @@ export default function DiscountDetails() {
               </p>
               <p>
                 <strong>Product ID:</strong> {product.id}
+              </p>
+              <p>
+                <strong>Current Price:</strong> ₦{product.price}
               </p>
             </div>
           </div>
