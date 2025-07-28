@@ -1,5 +1,3 @@
-// File: src/pages/admin/carts/index.jsx
-
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase.config";
@@ -9,8 +7,10 @@ import { FaChevronLeft } from "react-icons/fa";
 
 export default function CartList() {
   const [carts, setCarts] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [paginated, setPaginated] = useState([]);
   const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
   const PER_PAGE = 10;
 
   useEffect(() => {
@@ -24,7 +24,9 @@ export default function CartList() {
           const productList = Object.values(productsObj);
 
           let vendorName = "Unknown Vendor";
+          let customerName = "Guest";
 
+          // Fetch vendor name
           if (productList.length > 0 && productList[0].vendorId) {
             try {
               const vendorSnap = await getDoc(
@@ -38,9 +40,24 @@ export default function CartList() {
             }
           }
 
+          // Fetch user name
+          if (cartData.userId) {
+            try {
+              const userSnap = await getDoc(
+                doc(db, "users", cartData.userId)
+              );
+              if (userSnap.exists()) {
+                customerName = userSnap.data().displayName || "Unnamed User";
+              }
+            } catch (e) {
+              console.error("Error fetching user:", e);
+            }
+          }
+
           return {
             id: docSnap.id,
             vendorName,
+            customerName,
             totalProducts: productList.length,
             hasProducts: productList.length > 0,
           };
@@ -52,6 +69,7 @@ export default function CartList() {
       );
 
       setCarts(sorted);
+      setFiltered(sorted);
       setPaginated(sorted.slice(0, PER_PAGE));
     };
 
@@ -62,7 +80,21 @@ export default function CartList() {
     setPage(selected);
     const start = selected * PER_PAGE;
     const end = start + PER_PAGE;
-    setPaginated(carts.slice(start, end));
+    setPaginated(filtered.slice(start, end));
+  };
+
+  const handleSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+    const results = carts.filter(
+      (cart) =>
+        cart.id.toLowerCase().includes(term) ||
+        cart.vendorName.toLowerCase().includes(term) ||
+        cart.customerName.toLowerCase().includes(term)
+    );
+    setFiltered(results);
+    setPaginated(results.slice(0, PER_PAGE));
+    setPage(0);
   };
 
   return (
@@ -75,13 +107,24 @@ export default function CartList() {
         Back
       </button>
 
-      <h1 className="text-2xl font-bold mb-6 text-customOrange">Carts</h1>
+      <h1 className="text-2xl font-bold mb-4 text-customOrange">Carts</h1>
+
+      {/* Search input */}
+      <input
+        type="text"
+        placeholder="Search by Cart ID, Vendor or Customer"
+        value={searchTerm}
+        onChange={handleSearch}
+        className="mb-4 w-full md:w-1/2 p-2 border border-gray-300 rounded"
+      />
 
       <div className="overflow-x-auto bg-white border rounded shadow">
         <table className="min-w-full">
           <thead className="bg-gray-100 text-left">
             <tr>
+              <th className="p-4">Cart ID</th>
               <th className="p-4">Vendor</th>
+              <th className="p-4">Customer</th>
               <th className="p-4">Product Count</th>
               <th className="p-4">Action</th>
             </tr>
@@ -89,7 +132,9 @@ export default function CartList() {
           <tbody>
             {paginated.map((cart) => (
               <tr key={cart.id} className="border-t hover:bg-gray-50">
+                <td className="p-4">{cart.id}</td>
                 <td className="p-4">{cart.vendorName}</td>
+                <td className="p-4">{cart.customerName}</td>
                 <td className="p-4">
                   {cart.totalProducts > 0
                     ? cart.totalProducts
@@ -112,8 +157,9 @@ export default function CartList() {
       <ReactPaginate
         previousLabel={"Previous"}
         nextLabel={"Next"}
-        pageCount={Math.ceil(carts.length / PER_PAGE)}
+        pageCount={Math.ceil(filtered.length / PER_PAGE)}
         onPageChange={handlePageChange}
+        forcePage={page}
         containerClassName="flex justify-center mt-6 space-x-2"
         pageClassName="px-3 py-2 bg-gray-200 rounded"
         activeClassName="bg-blue-600 text-white"

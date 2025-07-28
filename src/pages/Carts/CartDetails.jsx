@@ -5,28 +5,36 @@ import { doc, getDoc } from "firebase/firestore";
 import { FaChevronLeft } from "react-icons/fa";
 
 export default function CartDetails() {
-  const { id } = useParams();
+  const { id } = useParams(); // cart ID
   const navigate = useNavigate();
   const [cart, setCart] = useState(null);
   const [userName, setUserName] = useState("Guest");
+  const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCart = async () => {
-      const cartRef = doc(db, "carts", id);
-      const cartSnap = await getDoc(cartRef);
+      try {
+        const cartRef = doc(db, "carts", id);
+        const cartSnap = await getDoc(cartRef);
 
-      if (cartSnap.exists()) {
-        const cartData = cartSnap.data();
+        if (cartSnap.exists()) {
+          const cartData = cartSnap.data();
+          setCart({ id: cartSnap.id, ...cartData });
 
-        if (cartData.userId) {
-          const userSnap = await getDoc(doc(db, "users", cartData.userId));
-          if (userSnap.exists()) {
-            setUserName(userSnap.data().displayName || "Unnamed User");
+          if (cartData.userId) {
+            const userRef = doc(db, "users", cartData.userId);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+              setUserName(userData.displayName || "Unnamed User");
+              setUserDetails(userData);
+            }
           }
         }
-
-        setCart({ id: cartSnap.id, ...cartData });
+      } catch (error) {
+        console.error("Error fetching cart details:", error);
       }
 
       setLoading(false);
@@ -58,11 +66,31 @@ export default function CartDetails() {
           User Info
         </h2>
         <p>
-          <strong>User:</strong> {userName}
+          <strong>User:</strong>{" "}
+          {cart.userId ? (
+            <button
+              onClick={() => navigate(`/dashboard/newusers/${cart.userId}`)}
+              className="text-blue-600 hover:underline"
+            >
+              {userName}
+            </button>
+          ) : (
+            userName
+          )}
         </p>
         <p>
           <strong>User ID:</strong> {cart.userId || "Guest"}
         </p>
+        {userDetails && (
+          <>
+            <p>
+              <strong>Email:</strong> {userDetails.email || "N/A"}
+            </p>
+            <p>
+              <strong>Phone:</strong> {userDetails.phone || "N/A"}
+            </p>
+          </>
+        )}
         <p>
           <strong>Items in Cart:</strong> {products.length}
         </p>
@@ -89,7 +117,7 @@ export default function CartDetails() {
                 <td className="p-3">
                   <img
                     src={p.selectedImageUrl || p.coverImageUrl}
-                    alt="Product"
+                    alt={p.name}
                     className="w-16 h-16 object-cover rounded"
                   />
                 </td>

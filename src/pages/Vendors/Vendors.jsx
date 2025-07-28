@@ -9,6 +9,7 @@ import { FaChevronLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import Modal from "../../Components/Modal";
+import Papa from "papaparse";
 
 export default function VendorList() {
   const functions = getFunctions();
@@ -158,6 +159,31 @@ export default function VendorList() {
     }
   };
 
+  const handleExportCSV = () => {
+  if (!vendors || vendors.length === 0) {
+    toast.error("No vendors to export.");
+    return;
+  }
+
+  const csvData = vendors.map((v) => ({
+    Name: `${v.firstName} ${v.lastName}`,
+    Email: v.email,
+    "Shop Name": v.shopName || "No store name set",
+    Status: v.isDeactivated ? "Deactivated" : "Active",
+    Approval: v.isApproved ? "Approved" : "Unapproved",
+  }));
+
+  const csv = Papa.unparse(csvData);
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "vendors_list.csv");
+  link.click();
+};
+
+
   const handleBackClick = () => {
     navigate("/dashboard");
   };
@@ -301,6 +327,13 @@ export default function VendorList() {
         >
           {deleteLoading ? "Deleting..." : "Delete Selected"}
         </button>
+
+        <button
+  onClick={handleExportCSV}
+  className="bg-blue-700 text-white px-4 py-2 rounded"
+>
+  Export CSV
+</button>
       </div>
 
       <table className="min-w-full bg-white shadow rounded-lg">

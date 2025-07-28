@@ -284,7 +284,7 @@ const AdminDashboard = () => {
         {/* New Cart */}
 
         <div
-          // onClick={handleCartsClick}
+          onClick={handleCartsClick}
           className="bg-white shadow-lg p-6 rounded-lg cursor-pointer hover:bg-gray-100"
         >
           <h2 className="text-xl font-semibold text-gray-700">Carts</h2>
