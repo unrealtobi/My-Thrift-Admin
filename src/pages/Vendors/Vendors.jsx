@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../../firebase.config";
-import { collection, getDocs, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import ReactPaginate from "react-paginate";
 import { RotatingLines } from "react-loader-spinner";
@@ -159,29 +159,73 @@ export default function VendorList() {
     }
   };
 
-  const handleExportCSV = () => {
-  if (!vendors || vendors.length === 0) {
-    toast.error("No vendors to export.");
-    return;
+  const handleExportCSV = async () => {
+  try {
+    toast.loading("Preparing export...");
+
+    const snapshot = await getDocs(collection(db, "vendors"));
+    const vendorList = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    const enhancedData = await Promise.all(
+      vendorList.map(async (vendor) => {
+        const name = `${vendor.firstName || ""} ${vendor.lastName || ""}`.trim();
+        const email = vendor.email || "";
+        const phone = `="${vendor.phoneNumber || ""}"`;
+        const shopName = vendor.shopName || "No store name set";
+        const status = vendor.isDeactivated ? "Deactivated" : "Active";
+        const approval = vendor.isApproved ? "Approved" : "Unapproved";
+
+        // Get total products
+        const productsSnapshot = await getDocs(
+          query(collection(db, "products"), where("vendorId", "==", vendor.id))
+        );
+        const totalProducts = productsSnapshot.size;
+
+        // Get total orders
+        const ordersSnapshot = await getDocs(
+          query(collection(db, "orders"), where("vendorId", "==", vendor.id))
+        );
+        const totalOrders = ordersSnapshot.size;
+
+        return {
+          Name: name,
+          Email: email,
+          Phone: phone,
+          "Shop Name": shopName,
+          Status: status,
+          Approval: approval,
+          "Total Products": totalProducts,
+          "Total Orders": totalOrders,
+        };
+      })
+    );
+    enhancedData.sort((a, b) => {
+  if (a.Approval === "Approved" && b.Approval !== "Approved") return -1;
+  if (a.Approval !== "Approved" && b.Approval === "Approved") return 1;
+  return 0;
+});
+
+    const csv = Papa.unparse(enhancedData);
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "vendors_list.csv");
+    link.click();
+
+    toast.dismiss();
+    toast.success("CSV downloaded successfully.");
+  } catch (err) {
+    toast.dismiss();
+    console.error("Export error:", err);
+    toast.error("Error exporting CSV.");
   }
-
-  const csvData = vendors.map((v) => ({
-    Name: `${v.firstName} ${v.lastName}`,
-    Email: v.email,
-    "Shop Name": v.shopName || "No store name set",
-    Status: v.isDeactivated ? "Deactivated" : "Active",
-    Approval: v.isApproved ? "Approved" : "Unapproved",
-  }));
-
-  const csv = Papa.unparse(csvData);
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "vendors_list.csv");
-  link.click();
 };
+
 
 
   const handleBackClick = () => {

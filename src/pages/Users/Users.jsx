@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   collection,
   getDocs,
+  getDoc,
   updateDoc,
   doc,
   query,
@@ -15,6 +16,8 @@ import { getFunctions, httpsCallable } from "firebase/functions";
 import Modal from "../../Components/Modal";
 import ReactPaginate from "react-paginate";
 import { FaChevronLeft } from "react-icons/fa";
+import Papa from "papaparse";
+
 
 const functions = getFunctions();
 const deleteUserAndData = httpsCallable(functions, "deleteUserAndData");
@@ -171,6 +174,84 @@ export default function UserList() {
       toast.error("Deactivation failed.");
     }
   };
+  const handleExportUsersCSV = async () => {
+  try {
+    toast.loading("Exporting users...");
+
+    const usersSnapshot = await getDocs(collection(db, "users"));
+    const usersList = usersSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    const enhancedUsers = await Promise.all(
+      usersList.map(async (user) => {
+        const username = user.username || "";
+        const email = user.email || "";
+        const phone = `="${user.phoneNumber || ""}"`;
+        const status = user.isDeactivated ? "Inactive" : "Active";
+
+        let cartCount = 0;
+        let productLinks = [];
+
+        try {
+          const cartDoc = await getDoc(doc(db, "carts", user.id));
+          const cartData = cartDoc.exists() ? cartDoc.data().cart : null;
+
+          if (cartData && typeof cartData === "object") {
+            for (const cartEntry of Object.values(cartData)) {
+              if (cartEntry.products && typeof cartEntry.products === "object") {
+                const productIds = Object.keys(cartEntry.products);
+                cartCount += productIds.length;
+
+                // Create links using your routing pattern
+                // const links = productIds.map(
+                //   (id) => `https://shopmythrift.store/dashboard/products/${id}`
+                // );
+                // productLinks.push(...links);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch cart for user ${user.id}:`, err);
+        }
+
+        return {
+          "User ID": user.id,
+          Username: username,
+          Email: email,
+          Phone: phone,
+          Status: status,
+          "Cart Items": cartCount,
+          // "Cart Product Links": productLinks.join(", "),
+        };
+      })
+    );
+
+    enhancedUsers.sort((a, b) => {
+      if (a.Status === "Active" && b.Status !== "Active") return -1;
+      if (a.Status !== "Active" && b.Status === "Active") return 1;
+      return 0;
+    });
+
+    const csv = Papa.unparse(enhancedUsers);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "users_list.csv");
+    link.click();
+
+    toast.dismiss();
+    toast.success("Users exported successfully.");
+  } catch (err) {
+    toast.dismiss();
+    console.error("Error exporting users:", err);
+    toast.error("Error exporting users.");
+  }
+};
+
+
 
   const confirmAction = (action) => {
     if (selectedUserIds.length === 0) {
@@ -340,6 +421,12 @@ export default function UserList() {
             >
               Delete Selected
             </button>
+            <button
+  onClick={handleExportUsersCSV}
+  className="bg-blue-700 text-white px-4 py-2 rounded"
+>
+  Export Users CSV
+</button>
           </div>
 
           <ReactPaginate
