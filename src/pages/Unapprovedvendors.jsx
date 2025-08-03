@@ -7,7 +7,7 @@ import {
   updateDoc,
   doc,
 } from "firebase/firestore";
-import { db } from "../firebase.config";
+import { db, functions } from "../firebase.config";
 import {
   FaChevronLeft,
   FaUserCircle,
@@ -25,27 +25,114 @@ import {
 } from "react-icons/fa";
 import { RotatingLines } from "react-loader-spinner";
 import { useNavigate } from "react-router-dom"; // For navigating back
-
+import { httpsCallable } from "firebase/functions";
 const UnapprovedVendors = () => {
   const [unapprovedVendors, setUnapprovedVendors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [approving, setApproving] = useState("");
+  const [idImageUrls, setIdImageUrls] = useState({});
+
   const navigate = useNavigate(); // For navigation
 
   useEffect(() => {
     const fetchUnapprovedVendors = async () => {
       setLoading(true);
+
+      // 0) Who is the current user + do they have admin claims?
       try {
-        const vendorsSnapshot = await getDocs(
+        const cur = auth.currentUser;
+        if (!cur) {
+          console.warn(
+            "[Admin check] No current user. Callable will fail with unauthenticated."
+          );
+        } else {
+          const tokenRes = await cur.getIdTokenResult();
+          console.log(
+            "[Admin check] uid:",
+            cur.uid,
+            "email:",
+            cur.email,
+            "claims:",
+            tokenRes.claims
+          );
+          if (!tokenRes.claims?.admin) {
+            console.warn(
+              "[Admin check] Current user does NOT have admin=true. Callable will  'permission-denied'."
+            );
+          }
+        }
+      } catch (e) {
+        console.warn("[Admin check] Could not read token claims:", e);
+      }
+
+      try {
+        // 1) Fetch vendors
+        const qSnap = await getDocs(
           query(collection(db, "vendors"), where("isApproved", "==", false))
         );
-        const vendorsList = vendorsSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+
+        const vendorsList = qSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        console.log(
+          `[Vendors] Found ${vendorsList.length} unapproved vendor(s).`,
+          vendorsList
+        );
+
+        // 2) Log per vendor the relevant ID fields
+        vendorsList.forEach((v) => {
+          console.log(
+            `[Vendor] id=${v.id} shop=${
+              v.shopName ?? "(no name)"
+            } | idUploaded=${!!v.idUploaded} | idPath=${v.idPath ?? "(none)"}`
+          );
+        });
+
         setUnapprovedVendors(vendorsList);
+
+        // 3) Prepare callable (log region sanity)
+        console.log(
+          "[Functions] Using callable getVendorIdImageUrl with region bound at initialization:",
+          functions?.region || "(default)"
+        );
+
+        const getUrl = httpsCallable(functions, "getVendorIdImageUrl");
+
+        // 4) Fetch signed URLs for those who have an ID (idUploaded OR idPath)
+        await Promise.all(
+          vendorsList.map(async (v) => {
+            if (!v.idUploaded && !v.idPath) {
+              console.log(
+                `[ID Fetch] Skip ${v.id}: neither idUploaded nor idPath present.`
+              );
+              return;
+            }
+            const t0 = performance.now();
+            try {
+              console.log(
+                `[ID Fetch] Requesting signed URL for vendor=${v.id}…`
+              );
+              const { data } = await getUrl({ vendorId: v.id });
+              const t1 = performance.now();
+              console.log(
+                `[ID Fetch] ✅ Success for ${v.id} in ${(t1 - t0).toFixed(
+                  0
+                )}ms. URL length=${(data?.url || "").length}`
+              );
+              setIdImageUrls((m) => ({ ...m, [v.id]: data.url }));
+            } catch (e) {
+              const t1 = performance.now();
+              // Log structured error info from callable
+              const { code, message, details } = e || {};
+              console.warn(
+                `[ID Fetch] ❌ Failed for ${v.id} in ${(t1 - t0).toFixed(
+                  0
+                )}ms. code=${code} message=${message} details=`,
+                details
+              );
+            }
+          })
+        );
       } catch (error) {
-        console.error("Error fetching unapproved vendors: ", error);
+        console.error("[Vendors] Error fetching unapproved vendors:", error);
       } finally {
         setLoading(false);
       }
@@ -79,9 +166,11 @@ const UnapprovedVendors = () => {
       // Send SMS notification to the vendor
       console.log(`Preparing to send SMS to vendor: ${vendor.phoneNumber}`);
       const userPhoneNumber = vendor.phoneNumber;
-      const smsUsername = import.meta.env.VITE_BETASMS_USERNAME || "defaultUsername";
-      const smsPassword = import.meta.env.VITE_BETASMS_PASSWORD || "defaultPassword";
-      
+      const smsUsername =
+        import.meta.env.VITE_BETASMS_USERNAME || "defaultUsername";
+      const smsPassword =
+        import.meta.env.VITE_BETASMS_PASSWORD || "defaultPassword";
+
       if (!smsUsername || !smsPassword) {
         console.error(
           "BetaSMS credentials are missing. Ensure REACT_APP_BETASMS_USERNAME and REACT_APP_BETASMS_PASSWORD are set."
@@ -311,19 +400,24 @@ const UnapprovedVendors = () => {
                     ID Verification:
                   </label>
                   <p className="w-2/3 font-poppins">
-                    {vendor.idVerification || "Not Provided"}
+                    {vendor.idUploaded ? "Uploaded" : "Not Provided"}
                   </p>
                 </div>
 
-                {vendor.idImage && (
+                {vendor.idUploaded && (
                   <div className="mb-4">
-                    <img
-                      src={vendor.idImage}
-                      alt="ID Image"
-                      className="w-full h-auto rounded-lg shadow-md"
-                    />
+                    {idImageUrls[vendor.id] ? (
+                      <img
+                        src={idImageUrls[vendor.id]}
+                        alt="Vendor ID"
+                        className="w-full h-auto rounded-lg shadow-md"
+                      />
+                    ) : (
+                      <p className="text-xs italic">Loading ID…</p>
+                    )}
                   </div>
                 )}
+
                 <button
                   onClick={() => approveVendor(vendor)}
                   className={`${
