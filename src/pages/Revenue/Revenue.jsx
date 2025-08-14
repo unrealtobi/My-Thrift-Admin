@@ -78,35 +78,42 @@ export default function RevenueDashboard() {
   const [selectedWeek, setSelectedWeek] = useState(0); // week index in month
 
   useEffect(() => {
-    const run = async () => {
-      try {
-        setLoading(true);
-        const qy = query(
-          collection(db, "cartServiceFees"),
-          orderBy("timestamp", "desc")
-        );
-        const snap = await getDocs(qy);
-        const rows = snap.docs.map((docSnap) => {
+  const run = async () => {
+    try {
+      setLoading(true);
+      const qy = query(
+        collection(db, "orders"), // fetching from orders collection
+        orderBy("createdAt", "desc") // sort by createdAt
+      );
+      const snap = await getDocs(qy);
+      const rows = snap.docs
+        .map((docSnap) => {
           const data = docSnap.data();
           return {
             id: docSnap.id,
             serviceFee: Number(data.serviceFee ?? 0),
-            createdAt: data.timestamp?.toDate
-              ? data.timestamp.toDate()
+            createdAt: data.createdAt?.toDate
+              ? data.createdAt.toDate()
               : new Date(),
-            cartHash: data.cartHash || "",
+            status: data.status || "",
           };
-        });
-        setItems(rows);
-      } catch (e) {
-        console.error(e);
-        toast.error("Failed to load revenue data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    run();
-  }, []);
+        })
+        .filter(
+          (order) =>
+            order.status === "success" && order.serviceFee > 0 // filters
+        );
+
+      setItems(rows);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load revenue data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  run();
+}, []);
+
 
   const filtered = useMemo(() => {
     if (range === "all") return items;
