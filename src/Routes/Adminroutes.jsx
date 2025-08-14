@@ -25,6 +25,7 @@ import UserList from "../pages/Users/Users";
 import UserDetails from "../pages/Users/UsersDetails";
 import CartDetails from "../pages/Carts/CartDetails";
 import CartList from "../pages/Carts/CartList";
+import RevenueDashboard from "../pages/Revenue/Revenue";
 const AdminRoutes = () => {
   return (
     <Routes>
@@ -221,6 +222,14 @@ const AdminRoutes = () => {
         element={
           <PrivateRoute>
             <CartDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="revenue"
+        element={
+          <PrivateRoute>
+            <RevenueDashboard />
           </PrivateRoute>
         }
       />

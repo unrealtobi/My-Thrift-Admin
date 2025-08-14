@@ -139,6 +139,9 @@ const AdminDashboard = () => {
   const handleCartsClick = () => {
     navigate("/dashboard/carts"); // Route to your carts admin page
   };
+  const handleRevenueClick = () => {
+    navigate("/dashboard/revenue"); // Route to your products admin page
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -239,6 +242,19 @@ const AdminDashboard = () => {
             {" "}
             Primary: {totalSubscriptions}
           </p>
+        </div>
+
+        {/* Total Subscribers */}
+
+        <div
+          onClick={handleRevenueClick}
+          className="bg-white shadow-lg p-6 rounded-lg cursor-pointer hover:bg-gray-100"
+        >
+          <h2 className="text-xl font-semibold text-gray-700">Total Revenue</h2>
+          {/* <p className="text-2xl font-bold text-green-500">
+            {" "}
+            Primary: {totalSubscriptions}
+          </p> */}
         </div>
         <div
           onClick={handlePushClick}
