@@ -5,12 +5,10 @@ import { db } from "../../firebase.config";
 import {
   FaChevronLeft,
   FaChartLine,
-  FaTable,
   FaFileExport,
   FaCalendarAlt,
 } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
-import ReactPaginate from "react-paginate";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import {
@@ -43,18 +41,18 @@ const formatDayKey = (d) =>
     d.getDate()
   ).padStart(2, "0")}`;
 
-  const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
-  const getWeeksInMonth = (month, year) => {
-    const totalDays = daysInMonth(month, year);
-    const weeks = [];
-    let start = 1;
-    while (start <= totalDays) {
-      let end = Math.min(start + 6, totalDays);
-      weeks.push({ start, end });
-      start += 7;
-    }
-    return weeks;
-  };
+const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
+const getWeeksInMonth = (month, year) => {
+  const totalDays = daysInMonth(month, year);
+  const weeks = [];
+  let start = 1;
+  while (start <= totalDays) {
+    let end = Math.min(start + 6, totalDays);
+    weeks.push({ start, end });
+    start += 7;
+  }
+  return weeks;
+};
 
 export default function RevenueDashboard() {
   const navigate = useNavigate();
@@ -82,8 +80,8 @@ export default function RevenueDashboard() {
     try {
       setLoading(true);
       const qy = query(
-        collection(db, "orders"), // fetching from orders collection
-        orderBy("createdAt", "desc") // sort by createdAt
+        collection(db, "orders"),
+        orderBy("createdAt", "desc")
       );
       const snap = await getDocs(qy);
       const rows = snap.docs
@@ -98,10 +96,7 @@ export default function RevenueDashboard() {
             status: data.status || "",
           };
         })
-        .filter(
-          (order) =>
-            order.status === "success" && order.serviceFee > 0 // filters
-        );
+        .filter((order) => order.serviceFee > 0); // only filter by amount
 
       setItems(rows);
     } catch (e) {
@@ -208,8 +203,6 @@ export default function RevenueDashboard() {
     URL.revokeObjectURL(url);
     toast.success("CSV exported.");
   };
-
-
 
   return (
     <div className="p-6">
@@ -338,7 +331,7 @@ export default function RevenueDashboard() {
 
       <div className="flex items-center justify-between mb-4">
         <div className="font-semibold text-gray-700">
-          {viewGraph ? "Revenue Graph" : "Transactions"}
+          Revenue Graph
         </div>
         <div className="flex gap-2">
           <button
@@ -347,170 +340,79 @@ export default function RevenueDashboard() {
           >
             <FaFileExport /> Export CSV
           </button>
-          <button
-            onClick={() => setViewGraph((v) => !v)}
-            className="px-4 py-2 bg-blue-600 text-white rounded flex items-center gap-2 hover:bg-blue-700"
-          >
-            {viewGraph ? (
-              <>
-                <FaTable /> View Table
-              </>
-            ) : (
-              <>
-                <FaChartLine /> View Graph
-              </>
-            )}
-          </button>
         </div>
       </div>
 
       <div className="relative overflow-hidden">
-        {/* Table */}
-        <div
-          className={`transition-all duration-500 ${
-            viewGraph
-              ? "opacity-0 -translate-x-6 absolute inset-0 pointer-events-none"
-              : "opacity-100 translate-x-0"
-          }`}
-        >
-          <div className="overflow-x-auto bg-white border rounded shadow">
-            <table className="min-w-full">
-              <thead className="bg-gray-100 text-left">
-                <tr>
-                  <th className="p-4">ID</th>
-                  <th className="p-4">Service Fee</th>
-                  <th className="p-4">Date/Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td className="p-4" colSpan={3}>
-                      Loading…
-                    </td>
-                  </tr>
-                ) : currentRows.length ? (
-                  currentRows.map((r) => (
-                    <tr key={r.id} className="border-t hover:bg-gray-50">
-                      <td className="p-4">{r.id}</td>
-                      <td className="p-4">{NGN(r.serviceFee)}</td>
-                      <td className="p-4">{r.createdAt.toLocaleString()}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td className="p-4" colSpan={3}>
-                      No transactions for this range.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <ReactPaginate
-            previousLabel={"Previous"}
-            nextLabel={"Next"}
-            breakLabel={"..."}
-            pageCount={pageCount}
-            onPageChange={({ selected }) => setPage(selected)}
-            containerClassName="flex justify-center mt-6 space-x-2"
-            pageClassName="px-3 py-2 bg-gray-200 rounded"
-            activeClassName="bg-blue-500 text-white"
-            previousClassName="px-3 py-2 bg-blue-500 text-white rounded"
-            nextClassName="px-3 py-2 bg-blue-500 text-white rounded"
-            forcePage={Math.min(page, pageCount - 1)}
-          />
-        </div>
-
-        {/* Graph */}
-        <div
-          className={`transition-all duration-500 ${
-            viewGraph
-              ? "opacity-100 translate-x-0"
-              : "opacity-0 translate-x-6 absolute inset-0 pointer-events-none"
-          }`}
-        >
+        {/* Only Graph View */}
+        <div className="transition-all duration-500 opacity-100 translate-x-0">
           <div
   className="p-4 rounded-2xl shadow-lg h-[420px]"
   style={{
-    background: "rgba(255, 255, 255, 0.15)",
+    background: "rgba(255, 255, 255, 0.15)", // <- comma is required
     backdropFilter: "blur(12px)",
     WebkitBackdropFilter: "blur(12px)",
     border: "1px solid rgba(255, 255, 255, 0.2)",
   }}
 >
-
-  <ResponsiveContainer width="100%" height={400}>
-    <LineChart
-      data={chartData}
-      margin={{ top: 20, right: 30, bottom: 20, left: 0 }}
-    >
-      <defs>
-        {/* Background gradient */}
-        <linearGradient id="bgGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f8fafc" stopOpacity={0.8} />
-          <stop offset="100%" stopColor="#eef2f7" stopOpacity={0.8} />
-        </linearGradient>
-
-        {/* Line gradient */}
-        <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#ff7f50" /> {/* your custom color */}
-          <stop offset="100%" stopColor="#ff4500" /> {/* darker shade */}
-        </linearGradient>
-      </defs>
-
-      {/* Subtle grid */}
-      <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" vertical={false} />
-
-      {/* X Axis */}
-      <XAxis
-        dataKey="day"
-        tick={{ fontSize: 12, fill: "#6b7280" }}
-        axisLine={false}
-        tickLine={false}
-      />
-
-      {/* Y Axis */}
-      <YAxis
-        tickFormatter={(v) =>
-          v >= 1_000_000
-            ? `${(v / 1_000_000).toFixed(1)}M`
-            : v >= 1_000
-            ? `${(v / 1_000).toFixed(1)}k`
-            : v
-        }
-        tick={{ fontSize: 12, fill: "#6b7280" }}
-        axisLine={false}
-        tickLine={false}
-      />
-
-      {/* Tooltip */}
-      <Tooltip
-        contentStyle={{
-          backgroundColor: "#fff",
-          border: "1px solid #e5e7eb",
-          borderRadius: "8px",
-          fontSize: "12px",
-        }}
-        formatter={(value) => NGN(value)}
-        labelFormatter={(label) => `Date: ${label}`}
-      />
-
-      {/* Main Line */}
-      <Line
-        type="monotone"
-        dataKey="cumulative"
-        stroke="url(#lineGradient)"
-        strokeWidth={3}
-        dot={false}
-      />
-    </LineChart>
-  </ResponsiveContainer>
-</div>
-
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart
+                data={chartData}
+                margin={{ top: 20, right: 30, bottom: 20, left: 0 }}
+              >
+                <defs>
+                  {/* Background gradient */}
+                  <linearGradient id="bgGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f8fafc" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="#eef2f7" stopOpacity={0.8} />
+                  </linearGradient>
+                  {/* Line gradient */}
+                  <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#ff7f50" />
+                    <stop offset="100%" stopColor="#ff4500" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 12, fill: "#6b7280" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={(v) =>
+                    v >= 1_000_000
+                      ? `${(v / 1_000_000).toFixed(1)}M`
+                      : v >= 1_000
+                      ? `${(v / 1_000).toFixed(1)}k`
+                      : v
+                  }
+                  tick={{ fontSize: 12, fill: "#6b7280" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value) => NGN(value)}
+                  labelFormatter={(label) => `Date: ${label}`}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="cumulative"
+                  stroke="url(#lineGradient)"
+                  strokeWidth={3}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
