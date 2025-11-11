@@ -58,6 +58,13 @@ export default function FeedbackList() {
         })
       );
 
+      // sort by submittedAt (or createdAt) descending
+      list.sort(
+        (a, b) =>
+          (b.submittedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0) -
+          (a.submittedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0)
+      );
+
       setFeedbacks(list);
     };
 

@@ -20,10 +20,13 @@ export default function StockpilesList() {
   useEffect(() => {
     const fetchData = async () => {
       const stockSnap = await getDocs(collection(db, "stockpiles"));
-      const stockList = stockSnap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const stockList = stockSnap.docs
+        .map((doc) => ({ id: doc.id, ...doc.data(), __createTime: doc.createTime?.toMillis?.() }))
+        .sort(
+          (a, b) =>
+            (b.createdAt?.toMillis?.() || b.__createTime || 0) -
+            (a.createdAt?.toMillis?.() || a.__createTime || 0)
+        );
 
       const userIds = [...new Set(stockList.map((sp) => sp.userId))];
       const vendorIds = [...new Set(stockList.map((sp) => sp.vendorId))];

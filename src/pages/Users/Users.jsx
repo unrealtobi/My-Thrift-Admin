@@ -42,7 +42,14 @@ export default function UserList() {
     const fetchUsers = async () => {
       setLoading(true);
       const snapshot = await getDocs(collection(db, "users"));
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data(), __createTime: doc.createTime?.toMillis?.() }))
+        .sort(
+          (a, b) =>
+            (b.createdAt?.toMillis?.() || b.__createTime || 0) -
+            (a.createdAt?.toMillis?.() || a.__createTime || 0)
+        );
+
       setUsers(data);
       setLoading(false);
     };

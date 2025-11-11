@@ -42,6 +42,13 @@ export default function OrderList() {
           return order;
         })
       );
+
+      // sort by createdAt or doc snapshot createTime, newest first
+      data.sort(
+        (a, b) =>
+          (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
+      );
+
       setOrders(data);
     };
     fetchOrders();

@@ -1,0 +1,30 @@
+{
+  "name": "My Thrift Admin",
+  "short_name": "MyThrift",
+  "description": "Admin dashboard for My Thrift — installable web app.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff8a00",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

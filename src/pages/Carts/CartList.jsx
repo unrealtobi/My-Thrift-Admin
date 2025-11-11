@@ -43,9 +43,7 @@ export default function CartList() {
           // Fetch user name
           if (cartData.userId) {
             try {
-              const userSnap = await getDoc(
-                doc(db, "users", cartData.userId)
-              );
+              const userSnap = await getDoc(doc(db, "users", cartData.userId));
               if (userSnap.exists()) {
                 customerName = userSnap.data().displayName || "Unnamed User";
               }
@@ -60,13 +58,15 @@ export default function CartList() {
             customerName,
             totalProducts: productList.length,
             hasProducts: productList.length > 0,
+            __createTime: docSnap.createTime?.toMillis?.() || cartData.createdAt?.toMillis?.(),
           };
         })
       );
 
-      const sorted = data.sort((a, b) =>
-        a.hasProducts === b.hasProducts ? 0 : a.hasProducts ? -1 : 1
-      );
+      // sort newest first using createTime fallback
+      const sorted = data
+        .sort((a, b) => (b.__createTime || 0) - (a.__createTime || 0))
+        .map(({ __createTime, ...rest }) => rest);
 
       setCarts(sorted);
       setFiltered(sorted);

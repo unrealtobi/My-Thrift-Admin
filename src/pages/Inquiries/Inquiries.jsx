@@ -71,6 +71,12 @@ export default function InquiriesList() {
         })
       );
 
+      // newest first
+      list.sort(
+        (a, b) =>
+          (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
+      );
+
       setInquiries(list);
       setFilteredInquiries(list);
       const vendorNames = [

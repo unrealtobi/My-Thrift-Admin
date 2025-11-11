@@ -36,7 +36,14 @@ export default function ProductList() {
   useEffect(() => {
     const fetchProducts = async () => {
       const snapshot = await getDocs(collection(db, "products"));
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const data = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data(), __createTime: doc.createTime?.toMillis?.() }))
+        .sort(
+          (a, b) =>
+            (b.createdAt?.toMillis?.() || b.__createTime || 0) -
+            (a.createdAt?.toMillis?.() || a.__createTime || 0)
+        );
+
       setProducts(data);
       setFilteredProducts(data);
       setCategories([

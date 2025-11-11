@@ -16,10 +16,13 @@ export default function DiscountList() {
 
   const fetchDiscounts = async () => {
     const discountSnap = await getDocs(collection(db, "discounts"));
-    const discountList = discountSnap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const discountList = discountSnap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data(), __createTime: doc.createTime?.toMillis?.() }))
+      .sort(
+        (a, b) =>
+          (b.createdAt?.toMillis?.() || b.__createTime || 0) -
+          (a.createdAt?.toMillis?.() || a.__createTime || 0)
+      );
     setDiscounts(discountList);
 
     // Fetch all products that have a discountId

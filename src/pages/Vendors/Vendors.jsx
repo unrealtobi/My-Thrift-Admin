@@ -39,7 +39,14 @@ export default function VendorList() {
     try {
       setLoading(true);
       const snapshot = await getDocs(collection(db, "vendors"));
-      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data(), __createTime: doc.createTime?.toMillis?.() }));
+
+      // sort by createdAt (if present) or Firestore snapshot createTime, newest first
+      list.sort(
+        (a, b) =>
+          (b.createdAt?.toMillis?.() || b.__createTime || 0) -
+          (a.createdAt?.toMillis?.() || a.__createTime || 0)
+      );
 
       setVendors(list);
 
