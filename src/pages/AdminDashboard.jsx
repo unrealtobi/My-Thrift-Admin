@@ -22,6 +22,22 @@ const AdminDashboard = () => {
   const [totalCarts, setTotalCarts] = useState(0);
   const [totalUnapprovedVendors, setTotalUnapprovedVendors] = useState(0);
   const navigate = useNavigate(); // Create navigate hook
+  const [installEvent, setInstallEvent] = useState(null); // New state for install prompt
+  // ... existing state and functions ...
+
+  // Listen for install prompt
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setInstallEvent(e);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
+  }, []);
 
   // Function to fetch data from Firestore
   const fetchCounts = async () => {
@@ -145,10 +161,22 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="bg-white shadow p-6 rounded-lg mb-6">
-        <h1 className="text-3xl font-semibold text-gray-700">
-          Admin Dashboard
-        </h1>
+<div className="bg-white shadow p-6 rounded-lg mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-semibold text-gray-700">Admin Dashboard</h1>
+        {installEvent && (
+          <button
+            onClick={async () => {
+              installEvent.prompt();
+              const { outcome } = await installEvent.userChoice;
+              if (outcome === "accepted") {
+                setInstallEvent(null); // Hide button after install
+              }
+            }}
+            className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Install App
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-6">

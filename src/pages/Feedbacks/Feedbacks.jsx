@@ -6,14 +6,14 @@ import {
   getDoc,
   query,
   where,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../../firebase.config";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 import { FaChevronLeft, FaFileExport } from "react-icons/fa";
 
 export default function FeedbackList() {
-  const navigate = useNavigate();
   const [feedbacks, setFeedbacks] = useState([]);
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("all");

@@ -3,7 +3,6 @@ import { db } from "../../firebase.config";
 import { collection, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
 import { toast } from "react-hot-toast";
 import ReactPaginate from "react-paginate";
-import { RotatingLines } from "react-loader-spinner";
 import { Link } from "react-router-dom";
 import { FaChevronLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -36,23 +35,24 @@ export default function VendorList() {
   const [unapprovedCount, setUnapprovedCount] = useState(0);
 
   const fetchVendors = async () => {
-    try {
-      setLoading(true);
-      const snapshot = await getDocs(collection(db, "vendors"));
-      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data(), __createTime: doc.createTime?.toMillis?.() }));
+  try {
+    setLoading(true);
+    const snapshot = await getDocs(collection(db, "vendors"));
+    const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data(), __createTime: doc.createTime?.toMillis?.() }));
 
-      // sort by createdAt (if present) or Firestore snapshot createTime, newest first
-      list.sort(
-        (a, b) =>
-          (b.createdAt?.toMillis?.() || b.__createTime || 0) -
-          (a.createdAt?.toMillis?.() || a.__createTime || 0)
-      );
+    // Sort by `createdSince` (new field name) or fallback to Firestore's internal `__createTime`
+    list.sort(
+      (a, b) =>
+        (b.createdSince?.toMillis?.() || b.__createTime || 0) -
+        (a.createdSince?.toMillis?.() || a.__createTime || 0)
+    );
 
-      setVendors(list);
+    setVendors(list);
 
       setTotalVendors(list.length);
-      setActivatedCount(list.filter((v) => !v.deactivated).length);
-      setDeactivatedCount(list.filter((v) => v.deactivated).length);
+      // use isDeactivated consistently
+      setActivatedCount(list.filter((v) => !v.isDeactivated).length);
+      setDeactivatedCount(list.filter((v) => v.isDeactivated).length);
       setApprovedCount(list.filter((v) => v.isApproved).length);
       setUnapprovedCount(list.filter((v) => !v.isApproved).length);
     } catch (error) {
@@ -99,7 +99,8 @@ export default function VendorList() {
   }, [itemOffset, vendors, searchQuery, statusFilter, approvalFilter]);
 
   const handlePageClick = (event) => {
-    const newOffset = (event.selected * VENDORS_PER_PAGE) % vendors.length;
+    // avoid modulo-by-zero, set explicit offset
+    const newOffset = event.selected * VENDORS_PER_PAGE;
     setItemOffset(newOffset);
   };
 
@@ -136,6 +137,15 @@ export default function VendorList() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // wrappers used by the Modal confirm
+  const handleActivateVendors = async () => {
+    await handleBulkToggle(false);
+  };
+
+  const handleDeactivateVendors = async () => {
+    await handleBulkToggle(true);
   };
 
   const handleDeleteVendors = async () => {

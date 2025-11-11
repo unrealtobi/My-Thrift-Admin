@@ -2,12 +2,56 @@
 <html lang="en">
   <head>
     <!-- ...existing code... -->
-    <!-- Add manifest and theme color for PWA install -->
+    <!-- PWA manifest & theme color -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <meta name="theme-color" content="#ff8a00">
     <!-- ...existing code... -->
   </head>
   <body>
     <!-- ...existing code... -->
+
+    <!-- Register minimal service worker to enable install prompt (will work on HTTPS or localhost) -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.warn('Service worker registration failed:', err);
+          });
+        });
+      }
+
+      // Capture beforeinstallprompt and expose a helper to trigger it from your app
+      (function () {
+        window.deferredInstallPrompt = null;
+        window.promptInstall = async function () {
+          const evt = window.deferredInstallPrompt;
+          if (!evt) {
+            return { outcome: 'no-prompt-available' };
+          }
+          try {
+            evt.prompt();
+            const choice = await evt.userChoice;
+            // reset saved event so subsequent clicks follow browser policy
+            window.deferredInstallPrompt = null;
+            return { outcome: choice.outcome, platform: choice.platform || null };
+          } catch (e) {
+            return { outcome: 'error', error: e };
+          }
+        };
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          // prevent the automatic mini-infobar on mobile
+          e.preventDefault();
+          // store the event for triggering later
+          window.deferredInstallPrompt = e;
+        });
+
+        // optional: listen for appinstalled
+        window.addEventListener('appinstalled', () => {
+          window.deferredInstallPrompt = null;
+          console.log('PWA installed');
+        });
+      })();
+    </script>
   </body>
 </html>

@@ -87,8 +87,8 @@ export default function ProductList() {
   );
 
   const handlePageClick = (event) => {
-    const newOffset =
-      (event.selected * PRODUCTS_PER_PAGE) % filteredProducts.length;
+    // set explicit offset (avoids modulo by zero)
+    const newOffset = event.selected * PRODUCTS_PER_PAGE;
     setItemOffset(newOffset);
   };
 

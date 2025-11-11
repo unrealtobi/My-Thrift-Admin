@@ -117,8 +117,8 @@ export default function InquiriesList() {
   );
 
   const handlePageClick = (event) => {
-    const newOffset =
-      (event.selected * INQUIRIES_PER_PAGE) % filteredInquiries.length;
+    // set explicit offset (avoids modulo by zero)
+    const newOffset = event.selected * INQUIRIES_PER_PAGE;
     setItemOffset(newOffset);
   };
 
